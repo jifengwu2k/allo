@@ -1,6 +1,106 @@
 <!--- Copyright Allo authors. All Rights Reserved. -->
 <!--- SPDX-License-Identifier: Apache-2.0  -->
 
+Restructured Allo Project
+=========================
+
+This repository is a restructured version of the Allo project.
+
+Overview
+--------
+
+In this version:
+
+*   The original example files under `examples/` are treated as **entry files** for direct execution.
+    
+*   The `allo` package, previously intended to be installed as a standalone module, is now directly imported by the example scripts.
+    
+*   The project is more self-contained and streamlined for local usage.
+    
+
+Notable Changes
+---------------
+
+*   Integrated the patched LLVM-19 project required to build the local LLVM-19 runtime.
+    
+*   Included the `past` Python package (`past-0.7.2`) from this release.
+    
+*   Updated `requirements.py` accordingly.
+    
+*   Removed `setup.py`.
+
+Requirements
+------------
+
+A Linux x86-64 system with Conda installed.
+
+Setup Instructions
+------------------
+
+Follow the steps below to set up and run the project.
+
+### Create a Conda Environment
+
+```bash
+conda create -n allo -y
+conda activate allo
+conda install -c conda-forge clang clangxx cmake git ninja python=3.12 pybind11 -y
+```
+
+### Build the Local LLVM-19 Runtime
+
+```bash
+cd externals/llvm-project
+mkdir -p build && cd build
+cmake -G Ninja ../llvm \
+-DLLVM_ENABLE_PROJECTS="clang;mlir;openmp" \
+-DLLVM_BUILD_EXAMPLES=ON \
+-DLLVM_TARGETS_TO_BUILD="host" \
+-DCMAKE_BUILD_TYPE=Release \
+-DLLVM_ENABLE_ASSERTIONS=ON \
+-DLLVM_INSTALL_UTILS=ON \
+-DMLIR_ENABLE_BINDINGS_PYTHON=ON \
+-DPython3_EXECUTABLE=$(which python3)
+ninja
+# Set environment variable for LLVM build directory
+export LLVM_BUILD_DIR=$(pwd)
+cd ../../..
+```
+
+### Build MLIR Python Bindings
+
+```bash
+cd mlir
+mkdir -p build && cd build
+cmake -G Ninja .. \
+-DMLIR_DIR=$LLVM_BUILD_DIR/lib/cmake/mlir \
+-DPython3_EXECUTABLE=$(which python3)
+# Temporarily increase the maximum number of open files allowed (for current session)
+# Prevent errors such as `/usr/bin/ld: cannot find /usr/lib/x86_64-linux-gnu/libz.so: Too many open files`
+ulimit -n 4096
+ninja
+cd ../..
+```
+
+### Install Additional Python Dependencies
+
+```bash
+pip3 install -r requirements.txt
+```
+
+### Run an Example
+
+To run an example, use the `PYTHONPATH` environment variable to include the current directory in the module search path and the `LLVM_BUILD_DIR` environment variable:
+
+
+```bash
+PYTHONPATH=$(pwd) LLVM_BUILD_DIR=externals/llvm-project/build python3 examples/polybench/gemm.py
+```
+
+This will run the GEMM kernel using the CPU backend.
+
+------
+
 <img src="tutorials/allo-icon.png" width=128/> Accelerator Design Language
 ==============================================================================
 

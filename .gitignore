@@ -6,7 +6,6 @@
 build
 python/dist
 python/*.egg-info
-test
 **/.pytest_cache
 cscope.*
 tags
@@ -83,5 +82,4 @@ docs/source/gallery
 log
 
 _tmp
-*.txt
 sg_execution_times.rst
